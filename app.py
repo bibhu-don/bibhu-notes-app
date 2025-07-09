@@ -25,16 +25,6 @@ class Note(db.Model):
     content = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-@app.before_first_request
-def create_tables():
-    db.create_all()
-    # Create default admin user if not exists
-    if not User.query.filter_by(username='admin').first():
-        admin = User(username='admin')
-        admin.set_password('password')
-        db.session.add(admin)
-        db.session.commit()
-
 @app.route('/')
 def index():
     if 'user_id' not in session:
@@ -79,6 +69,18 @@ def delete_note(note_id):
         db.session.delete(note)
         db.session.commit()
     return redirect(url_for('index'))
+
+# ✅ Initialization (Flask 3.x compatible)
+def initialize_app():
+    with app.app_context():
+        db.create_all()
+        if not User.query.filter_by(username='admin').first():
+            admin = User(username='admin')
+            admin.set_password('password')
+            db.session.add(admin)
+            db.session.commit()
+
+initialize_app()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
